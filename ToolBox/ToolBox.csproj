@@ -1,11 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<AssemblyName>ToolBox</AssemblyName>
 		<Authors>GoldMike</Authors>
 		<Description>Container for running my other CLI tools.</Description>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<IsPackable>true</IsPackable>
-		<LangVersion>preview</LangVersion>
+		<LangVersion>14</LangVersion>
 		<Nullable>enable</Nullable>
 		<OutputType>Exe</OutputType>
 		<PackAsTool>true</PackAsTool>
@@ -13,7 +14,6 @@
 		<PackageOutputPath>./bin/Release/nupkg</PackageOutputPath>
 		<TargetFramework>net10.0</TargetFramework>
 		<ToolCommandName>ToolBox</ToolCommandName>
-		<Version>1.4.29</Version>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Version>1.5.4</Version>
 	</PropertyGroup>
 </Project>
