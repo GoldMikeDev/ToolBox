@@ -16,7 +16,7 @@ namespace ToolBox.AddonModules.Updater
 		[LibraryImport("advapi32.dll")] [return: MarshalAs(UnmanagedType.Bool)] private static partial bool GetTokenInformation(IntPtr tokenHandle, TOKEN_INFORMATION_CLASS tokenInformationClass, IntPtr tokenInformation, uint tokenInformationLength, out uint returnLength);
 		[LibraryImport("kernel32.dll")] [return: MarshalAs(UnmanagedType.Bool)] private static partial bool CloseHandle(IntPtr handle);
 		[StructLayout(LayoutKind.Sequential)] private struct TOKEN_ELEVATION { public uint tokenIsElevated; }
-		public static bool TryHandleUpdateCommandTree(string[] args, string toolId, string csprojFileName, out int exitCode)
+		internal static bool TryHandleUpdateCommandTree(string[] args, string toolId, string csprojFileName, out int exitCode)
 		{
 			bool credentials = false;
 			string? user = null;
@@ -76,7 +76,7 @@ namespace ToolBox.AddonModules.Updater
 			Marshal.FreeHGlobal(tokenElevation);
 			return elevation;
 		}
-		public static void UpdateTool(string toolId, string csprojFileName, bool major, bool minor, bool forceUpdate, bool skipVersion, bool credentials = false, string? user = null, SecureString? pass = null, bool inheritConsole = true)
+		internal static void UpdateTool(string toolId, string csprojFileName, bool major, bool minor, bool forceUpdate, bool skipVersion, bool credentials = false, string? user = null, SecureString? pass = null, bool inheritConsole = true)
 		{
 			var projectDir = FindProjectDir(csprojFileName);
 			var csprojPath = Path.Combine(projectDir, csprojFileName);
@@ -206,9 +206,9 @@ namespace ToolBox.AddonModules.Updater
 			catch (Exception ex) { Console.WriteLine($" ⚠️ Cleanup encountered an issue: {ex.Message}"); }
 			Console.WriteLine(" ✅ Cleanup complete.");
 		}
-		internal static class Cmd
+		private static class Cmd
 		{
-			public static (int ExitCode, string Output, string Error) Run(string exe, string args, string? workingDir, bool silent, bool streamToConsole, bool exitOnFail, bool inheritConsole)
+			internal static (int ExitCode, string Output, string Error) Run(string exe, string args, string? workingDir, bool silent, bool streamToConsole, bool exitOnFail, bool inheritConsole)
 			{
 				try
 				{

@@ -6,9 +6,9 @@ namespace ToolBox.Config
         internal static Dictionary<string, object> GetConfig(List<string> toolNames)
         {
             Dictionary<string, object> root = [];
-            root["Config"] = new Dictionary<string, object>();
+            //root["Config"] = new Dictionary<string, object>();
             Stack<(Dictionary<string, object>, int)> stack = new();
-            stack.GoDeeper((root, 0));
+            //stack.GoDown((root, 0));
             foreach (string toolName in toolNames)
             {
                 string filePath = $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\.dotnet\\tools\\ToolBoxConfigs\\{toolName}.config";
@@ -19,8 +19,8 @@ namespace ToolBox.Config
                 string key;
                 string currentValue;
                 var toolDict = new Dictionary<string, object>();
-                stack.Current().Item1[toolName] = toolDict;
-                stack.GoDeeper((toolDict, 0));
+                root[toolName] = toolDict;
+                stack.GoDown((toolDict, 0));
                 foreach (string line in lines)
                 {
                     int indent = line.TakeWhile(c => c == '\t').Count();
@@ -30,11 +30,11 @@ namespace ToolBox.Config
                     int keyValueLineSeparator = line.IndexOf('=');
                     if (headerLineEnd != -1)
                     {
-                        while (indent <= stack.Current().Item2) { stack.GoBack(); }
+                        while (indent <= stack.Current().Item2) { stack.GoUp(); }
                         string header = line[..headerLineEnd];
                         var headerDict = new Dictionary<string, object>();
                         stack.Current().Item1[header] = headerDict;
-                        stack.GoDeeper((headerDict, indent));
+                        stack.GoDown((headerDict, indent));
                         continue;
                     }
                     else if (commentLineStart != -1)
@@ -52,7 +52,7 @@ namespace ToolBox.Config
                         currentValue = line[(keyValueLineSeparator + 1)..];
                         var keyDict = new Dictionary<string, object>();
                         stack.Current().Item1[key] = keyDict;
-                        stack.GoDeeper((keyDict, indent));
+                        stack.GoDown((keyDict, indent));
                         keyDict["description"] = description;
                         keyDict["defaultValue"] = defaultValue;
                         keyDict["options"] = options;
@@ -62,7 +62,7 @@ namespace ToolBox.Config
                     else { continue; }
                 }
                 stack.Clear();
-                stack.GoDeeper(((Dictionary<string, object>)root["Config"], 0));
+                stack.GoDown(((Dictionary<string, object>)root["Config"], 0));
             }
             return root;
         }
