@@ -36,23 +36,23 @@ namespace ToolBox.AddonModules
 		static readonly byte[,] csrbFile = new byte[maxIndex, maxIndexLength];
 		static string lastSavedEntry = "";
 		static readonly string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-		static string csrbFilePath = Path.Combine(userProfile, ".dotnet", "tools", "CSRB.csrb");
+		static string csrbFilePath = Path.Combine(userProfile, ".dotnet", "tools", "CSRB", "CSRB.csrb");
 		static int rhPointerIndex = 1;
 		static int whPointerIndex = 1;
 		public static void SetFilePath(string? path)
 		{
 			if (string.IsNullOrEmpty(path)) { return; }
-			csrbFilePath = Path.Combine(userProfile, ".dotnet", "tools", path);
+			csrbFilePath = Path.Combine(userProfile, ".dotnet", "tools", "CSRB", path);
 		}
 		public enum Direction { previous, next }
 		public enum Field { index, rh, wh, parity, concat, payload }
 		public static void Create()
 		{
-			Directory.CreateDirectory(Path.Combine(userProfile, ".dotnet", "tools"));
+			Directory.CreateDirectory(Path.Combine(userProfile, ".dotnet", "tools", "CSRB"));
 			using FileStream fs = File.Create(csrbFilePath);
 			for (int i = 1; i <= maxIndex; i++)
 			{
-				string record = $"{i.ToString().PadLeft(indexDigits, '0')},{rhNullPointer.PadLeft(rhDigits, '0')},{whNullPointer.PadLeft(whDigits, '0')},{parityEven.PadLeft(parityDigits, '0')},{1.ToString().PadLeft(concatDigits, '0')}," + new string('\u0020', maxIndexLength - headerLength - footerLength) + (i < maxIndex ? footer : " ");
+				string record = $"{i.ToString().PadLeft(indexDigits, '0')},{(i == 1 ? rhPointer : rhNullPointer).PadLeft(rhDigits, '0')},{(i == 1 ? whPointer : whNullPointer).PadLeft(whDigits, '0')},{parityEven.PadLeft(parityDigits, '0')},{1.ToString().PadLeft(concatDigits, '0')}," + new string('\u0020', maxIndexLength - headerLength - footerLength) + (i < maxIndex ? footer : " ");
 				fs.Write(UTF8.GetBytes(record));
 			}
 		}
@@ -65,10 +65,10 @@ namespace ToolBox.AddonModules
 				if (spinner != null)
 				{
 					spinner.Enqueue("", true);
-					spinner.Enqueue(" ⚠️ CSRB file not found. A new CSRB file has been created.", true);
+					spinner.Enqueue("⚠️ CSRB file not found. A new CSRB file has been created.", true);
 					spinner.Enqueue("", true);
 				}
-				else { Console.WriteLine(" ⚠️ CSRB file not found. A new CSRB file has been created."); }
+				else { Console.WriteLine("⚠️ CSRB file not found. A new CSRB file has been created."); }
 				return;
 			}
 			if (new FileInfo(csrbFilePath).Length != (long)maxIndex * maxIndexLength)
@@ -76,8 +76,8 @@ namespace ToolBox.AddonModules
 				if (spinner != null)
 				{
 					spinner.Enqueue("", true);
-					spinner.Enqueue(" ⚠️ CSRB file size has changed.", true);
-					spinner.Enqueue(" ⚠️ Before typing any commands backup existing CSRB file if you need to preserve it. It will be overwritten upon next command entered.", true);
+					spinner.Enqueue("⚠️ CSRB file size has changed.", true);
+					spinner.Enqueue("⚠️ Before typing any commands backup existing CSRB file if you need to preserve it. It will be overwritten upon next command entered.", true);
 					spinner.Enqueue("", true);
 				}
 				else
@@ -98,8 +98,8 @@ namespace ToolBox.AddonModules
 				if (spinner != null)
 				{
 					spinner.Enqueue("", true);
-					spinner.Enqueue(" ⚠️ Failed to load CSRB file. Command history from previous session will be unavailable.", true);
-					spinner.Enqueue(" ⚠️ Before typing any commands backup existing CSRB file if you need to preserve it. It will be overwritten upon saving.", true);
+					spinner.Enqueue("⚠️ Failed to load CSRB file. Command history from previous session will be unavailable.", true);
+					spinner.Enqueue("⚠️ Before typing any commands backup existing CSRB file if you need to preserve it. It will be overwritten upon saving.", true);
 					spinner.Enqueue("", true);
 				}
 				else
@@ -164,7 +164,7 @@ namespace ToolBox.AddonModules
 			WriteField(csrbFile, UTF8, parityIndex, field, pointer);
 			HeadCleanup(pointerIndexList, field, nullPointer);
 			pointerIndexList.Add(parityIndex);
-			if (spinner != null) { spinner.Enqueue($" ⚠️  {head} head was missing or duplicated and has been reset to index {parityIndex + 1}.", true); }
+			if (spinner != null) { spinner.Enqueue($"⚠️  {head} head was missing or duplicated and has been reset to index {parityIndex + 1}.", true); }
 			else { Console.WriteLine($" ⚠️  {head} head was missing or duplicated and has been reset to index {parityIndex + 1}."); }
 			Save(spinner);
 			return pointerIndexList;
@@ -307,8 +307,8 @@ namespace ToolBox.AddonModules
 				if (spinner != null)
 				{
 					spinner.Enqueue("", true);
-					spinner.Enqueue(" ⚠️ Failed to save CSRB file.", true);
-					spinner.Enqueue(" ⚠️ Backup existing CSRB file if you need to preserve it. It will be overwritten upon saving.", true);
+					spinner.Enqueue("⚠️ Failed to save CSRB file.", true);
+					spinner.Enqueue("⚠️ Backup existing CSRB file if you need to preserve it. It will be overwritten upon saving.", true);
 					spinner.Enqueue("", true);
 				}
 				else
@@ -328,7 +328,7 @@ namespace ToolBox.AddonModules
 				Field.parity => parity,
 				Field.concat => concat,
 				Field.payload => payload,
-				_ => throw new UnreachableException(" ⚠️ Invalid field. Must be 'index', 'rh', 'wh', 'parity', 'concat' or 'payload'."),
+				_ => throw new UnreachableException("⚠️ Invalid field. Must be 'index', 'rh', 'wh', 'parity', 'concat' or 'payload'."),
 			};
 			try
 			{
@@ -341,7 +341,7 @@ namespace ToolBox.AddonModules
 						{
 							"int" => (int)check,
 							"string" => (string)check,
-							_ => throw new UnreachableException(" ⚠️ Invalid type. Must be 'int' or 'string'."),
+							_ => throw new UnreachableException("⚠️ Invalid type. Must be 'int' or 'string'."),
 						};
 					case Direction.next:
 						check = Parse(type, ReadField(csrbFile, UTF8, (recordIndex + i) % maxIndex, fieldRange));
@@ -349,10 +349,10 @@ namespace ToolBox.AddonModules
 						{
 							"int" => (int)check,
 							"string" => (string)check,
-							_ => throw new UnreachableException(" ⚠️ Invalid type. Must be 'int' or 'string'."),
+							_ => throw new UnreachableException("⚠️ Invalid type. Must be 'int' or 'string'."),
 						};
 					default:
-						throw new UnreachableException(" ⚠️ Invalid direction. Must be 'previous' or 'next'.");
+						throw new UnreachableException("⚠️ Invalid direction. Must be 'previous' or 'next'.");
 				}
 			}
 			catch (ParseException) { FieldException(field, spinner); return null; }
@@ -365,41 +365,41 @@ namespace ToolBox.AddonModules
 				switch (field)
 				{
 					case Field.index:
-						spinner.Enqueue(" ⚠️ CSRB index corruption.", true);
+						spinner.Enqueue("⚠️ CSRB index corruption.", true);
 						break;
 					case Field.rh:
-						spinner.Enqueue(" ⚠️ CSRB read head corruption.", true);
+						spinner.Enqueue("⚠️ CSRB read head corruption.", true);
 						break;
 					case Field.wh:
-						spinner.Enqueue(" ⚠️ CSRB write head corruption.", true);
+						spinner.Enqueue("⚠️ CSRB write head corruption.", true);
 						break;
 					case Field.parity:
-						spinner.Enqueue(" ⚠️ CSRB parity corruption.", true);
+						spinner.Enqueue("⚠️ CSRB parity corruption.", true);
 						break;
 					case Field.concat:
-						spinner.Enqueue(" ⚠️ CSRB concat corruption.", true);
+						spinner.Enqueue("⚠️ CSRB concat corruption.", true);
 						break;
 					case Field.payload:
-						spinner.Enqueue(" ⚠️ CSRB payload corruption.", true);
+						spinner.Enqueue("⚠️ CSRB payload corruption.", true);
 						break;
 					default:
-						spinner.Enqueue(" ⚠️ CSRB unknown corruption.", true);
+						spinner.Enqueue("⚠️ CSRB unknown corruption.", true);
 						break;
 				}
-				spinner.Enqueue(" ⚠️ Before typing any commands backup existing CSRB file if you need to preserve it. It will be overwritten upon next command entered.", true);
+				spinner.Enqueue("⚠️ Before typing any commands backup existing CSRB file if you need to preserve it. It will be overwritten upon next command entered.", true);
 				spinner.Enqueue("", true);
 			}
 			else
 			{
 				throw field switch
 				{
-					Field.index => new Exception(" ⚠️ CSRB index corruption."),
-					Field.rh => new Exception(" ⚠️ CSRB read head corruption."),
-					Field.wh => new Exception(" ⚠️ CSRB write head corruption."),
-					Field.parity => new Exception(" ⚠️ CSRB parity corruption."),
-					Field.concat => new Exception(" ⚠️ CSRB concat corruption."),
-					Field.payload => new Exception(" ⚠️ CSRB payload corruption."),
-					_ => new UnreachableException(" ⚠️ CSRB unknown corruption."),
+					Field.index => new Exception("⚠️ CSRB index corruption."),
+					Field.rh => new Exception("⚠️ CSRB read head corruption."),
+					Field.wh => new Exception("⚠️ CSRB write head corruption."),
+					Field.parity => new Exception("⚠️ CSRB parity corruption."),
+					Field.concat => new Exception("⚠️ CSRB concat corruption."),
+					Field.payload => new Exception("⚠️ CSRB payload corruption."),
+					_ => new UnreachableException("⚠️ CSRB unknown corruption."),
 				};
 			}
 			return;

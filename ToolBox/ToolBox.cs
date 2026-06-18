@@ -3,6 +3,8 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Xml.Linq;
 using ToolBox.AddonModules;
+using ToolBox.AddonModules.Updater;
+using ToolBox.Config;
 [assembly: SupportedOSPlatform("windows")]
 namespace ToolBox
 {
@@ -11,18 +13,18 @@ namespace ToolBox
 		static readonly string header = @"
   ______                ___    _____                     
  /\__  _\              /\_ \  /\  _ `\                   
- \/_/\ \/   ___     ___\//\ \ \ \ \L\ \    ___   __  _  
-	\ \ \  / __`\  / __`\\ \ \ \ \  _ <.  / __`\/\ \/ \ 
-	 \ \ \/\ \L\ \/\ \L\ \\_\ \_\ \ \L\ \/\ \L\ \/>  </ 
-	  \ \_\ \____/\ \____//\____\\ \____/\ \____//\_/\_\
-	   \/_/\/___/  \/___/ \/____/ \/___/  \/___/ \//\/_/
+ \/_/\ \/   ___     ___\//\ \ \ \ \L\ \    ___   __  _   
+    \ \ \  / __`\  / __`\\ \ \ \ \  _ <.  / __`\/\ \/ \  
+     \ \ \/\ \L\ \/\ \L\ \\_\ \_\ \ \L\ \/\ \L\ \/>  </  
+      \ \_\ \____/\ \____//\____\\ \____/\ \____//\_/\_\ 
+       \/_/\/___/  \/___/ \/____/ \/___/  \/___/ \//\/_/ 
  -------------------------------------------------------";
 		static readonly string prompt = " 🧰 > ";
 		static readonly string[] allTools = ["ToolBox", "SteeleTerm", "WrapHDL"];
 		static readonly string author = "GoldMike";
 		static readonly Lock outputLock = new();
 		static List<string> installedTools = [];
-		static readonly string[] availableCommands = ["AllTools", "Exit", "Help", "InstalledTools", "Reset"];
+		static readonly string[] availableCommands = ["AllTools", "Config", "Exit", "Help", "InstalledTools", "Update", "Reset"];
 		static readonly Dictionary<string, string[]> argsPrimary = new(StringComparer.Ordinal);
 		static readonly Dictionary<string, string[]> argsSecondary = new(StringComparer.Ordinal);
 		static readonly Dictionary<string, string[]> argsSecondaryUpdate = new(StringComparer.Ordinal) { ["--update"] = ["--forceUpdate"], ["--updateMajor"] = ["--forceUpdate"], ["--updateMinor"] = ["--forceUpdate"] };
@@ -57,6 +59,9 @@ namespace ToolBox
 			}
 			Console.WriteLine(" 🚪 Exit");
 			Console.WriteLine("");
+			spinner.Start("⏳ Building config files");
+			Generator.CreateFiles(installedTools);
+			spinner.StopAndFlush();
 			spinner.Start("⏳ Building autocomplete");
 			BuildAutocomplete(installedTools);
 			spinner.StopAndFlush();
@@ -66,68 +71,132 @@ namespace ToolBox
 		Prompt:
 			int lineTop = Console.CursorTop;
 			Console.Write(prompt);
-			string? input = AutocompleteAndCommandHistory(spinner);
-			if (input == null)
-			{
-				ClearLine(lineTop);
-				goto Prompt;
-			}
-			if (installedTools.Any(t => input!.Contains(t)))
+			string input = AutocompleteAndCommandHistory(spinner);
+			if (installedTools.Any(t => input.Contains(t)))
 			{
 				ToolRunner(input);
-				Console.WriteLine("");
-				goto Prompt;
-			}
-			if (!IsValidCommand(input))
-			{
-				ClearLine(lineTop);
-				goto Prompt;
-			}
-			if (input == "Reset") goto Reset;
-			else if (input == "Help")
-			{
-				Console.WriteLine();
-				Console.WriteLine("      ToolBox Commands:");
-				Console.WriteLine("        \'AllTools\'                            List all available tools.");
-				Console.WriteLine("        \'Exit\'                                Close ToolBox.");
-				Console.WriteLine("        \'Help\'                                Print help to console.");
-				Console.WriteLine("        \'InstalledTools\'                      List all installed tools.");
-				Console.WriteLine("        \'Reset\'                               Reloads ToolBox.");
-				Console.WriteLine();
-				Console.WriteLine("      For dedicated tool help use \'<toolname> --help\'");
 				Console.WriteLine();
 				goto Prompt;
 			}
-			else if (input == "AllTools")
+			switch (input)
 			{
-				Console.WriteLine();
-				Console.WriteLine(" 📂 All Tools:");
-				if (allTools.Contains("ToolBox")) Console.WriteLine("    🧰 ToolBox:");
-				for (int i = 0; i < allTools.Length; i++)
-				{
-					if (allTools[i] == "ToolBox") continue;
-					Console.WriteLine($"       🔧 {allTools[i]}");
-				}
-				Console.WriteLine();
-				goto Prompt;
+				case "Reset":
+					goto Reset;
+				case "AllTools":
+					Console.WriteLine();
+					Console.WriteLine(" 📂 All Tools:");
+					if (allTools.Contains("ToolBox")) Console.WriteLine("    🧰 ToolBox:");
+					for (int i = 0; i < allTools.Length; i++)
+					{
+						if (allTools[i] == "ToolBox") continue;
+						Console.WriteLine($"       🔧 {allTools[i]}");
+					}
+					Console.WriteLine();
+					goto Prompt;
+				case "Config":
+					Console.WriteLine();
+					Editor.EditConfig(installedTools);
+					Console.WriteLine();
+					goto Prompt;
+				case "Exit":
+					spinner.Start("⏳ Saving command history");
+					CSRB.Save(spinner);
+					spinner.StopAndFlush();
+					return;
+				case "Help":
+					Console.WriteLine();
+					Console.WriteLine("      ToolBox Commands:");
+					Console.WriteLine("        \'AllTools\'                            List all available tools.");
+					Console.WriteLine("        \'Config\'                              Open config menu for installed tools.");
+					Console.WriteLine("        \'Exit\'                                Close ToolBox.");
+					Console.WriteLine("        \'Help\'                                Print help to console.");
+					Console.WriteLine("        \'InstalledTools\'                      List all installed tools.");
+					Console.WriteLine("        \'Update\'                              Checks for and installs any ToolBox updates.");
+					Console.WriteLine("        \'Reset\'                               Reloads ToolBox.");
+					Console.WriteLine();
+					Console.WriteLine("      For dedicated tool help use \'<toolname> --help\'");
+					Console.WriteLine();
+					goto Prompt;
+				case "InstalledTools":
+					Console.WriteLine();
+					PrintInstalledToolsByAuthor(author);
+					Console.WriteLine();
+					goto Prompt;
+				case "Update":
+					Console.WriteLine();
+					UpdateToolBox();
+					goto Prompt;
+				default:
+					ClearLine(lineTop);
+					goto Prompt;
 			}
-			else if (input == "InstalledTools")
+		}
+		static void UpdateToolBox()
+		{
+			Console.WriteLine("    Local(Source) or Remote(NuGet) (L/R):");
+			Console.WriteLine();
+		UpdateToolBox:
+			int lineTop = Console.CursorTop;
+			Console.Write(prompt);
+			string? updateSource = Console.ReadLine();
+			if (string.IsNullOrWhiteSpace(updateSource)) { ClearLine(lineTop); goto UpdateToolBox; }
+			updateSource = updateSource.ToUpperInvariant();
+			switch (updateSource)
 			{
-				Console.WriteLine();
-				PrintInstalledToolsByAuthor(author);
-				Console.WriteLine();
-				goto Prompt;
-			}
-			else if (input == "Exit")
-			{
-				spinner.Start("⏳ Saving command history");
-				CSRB.Save(spinner);
-				return;
-			}
-			else
-			{
-				ClearLine(lineTop);
-				goto Prompt;
+				case "Exit":
+					return;
+				case "L":
+					bool major = false;
+					bool minor = false;
+					bool force = false;
+					bool skip = false;
+					Console.WriteLine();
+					Console.WriteLine("    Select update options:");
+					Console.WriteLine("    ----------------------------------------------------");
+					Console.WriteLine("    Version bump:");
+					Console.WriteLine("     M - Major");
+					Console.WriteLine("     m - Minor");
+					Console.WriteLine("     p - patch (auto used if no version arg specified)");
+					Console.WriteLine("    ----------------------------------------------------");
+					Console.WriteLine("     f - Force Update (bypass version hash checks)");
+					Console.WriteLine("    ----------------------------------------------------");
+					Console.WriteLine("     s - Skips version increment (Requires Force Update)");
+					Console.WriteLine();
+				LocalSource:
+					lineTop = Console.CursorTop;
+					Console.Write(prompt);
+					string? updateTarget = Console.ReadLine();
+					if (string.IsNullOrWhiteSpace(updateTarget)) { ClearLine(lineTop); goto LocalSource; }
+					if ((updateTarget.Contains('M') && updateTarget.Contains('m')) || (updateTarget.Contains('M') && updateTarget.Contains('p')) || (updateTarget.Contains('m') && updateTarget.Contains('p')))
+					{
+						Console.WriteLine("Only one version bump type can be specified.");
+						ClearLine(lineTop);
+						goto LocalSource;
+					}
+					if (updateTarget.Contains('s') && !updateTarget.Contains('f'))
+					{
+						Console.WriteLine("Skip version requires force update.");
+						ClearLine(lineTop);
+						goto LocalSource;
+					}
+					if (updateTarget.Contains('M')) { major = true; }
+					if (updateTarget.Contains('m')) { minor = true; }
+					if (updateTarget.Contains('f')) { force = true; }
+					if (updateTarget.Contains('s')) { skip = true; }
+					Update.UpdateTool("ToolBox", "ToolBox.csproj", major, minor, force, skip, false, null, null, false);
+					return;
+				case "R":
+					Console.WriteLine("Not implemented yet.");
+					/*
+					var spinner = new ConsoleSpinner(outputLock, prompt, 100, 150);
+					spinner.Start("⏳ Starting update process");
+					bool inheritConsole = true;
+					Update.Cmd.Run("dotnet", "tool update --global ToolBox", null, false, true, true, inheritConsole);
+					*/
+					return;
+				default:
+					ClearLine(lineTop);
+					goto UpdateToolBox;
 			}
 		}
 		static string AutocompleteAndCommandHistory(ConsoleSpinner spinner)
@@ -274,12 +343,6 @@ namespace ToolBox
 					Console.SetCursorPosition(Left, Top);
 				}
 			}
-		}
-		static bool IsValidCommand(string input)
-		{
-			if (input == null) return false;
-			for (int i = 0; i < availableCommands.Length; i++) { if (input == availableCommands[i]) return true; }
-			return false;
 		}
 		static void ClearLine(int top)
 		{

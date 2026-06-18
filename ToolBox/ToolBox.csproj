@@ -7,6 +7,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<IsPackable>true</IsPackable>
 		<LangVersion>14</LangVersion>
+		<NoWarn>$(NoWarn);NU5111</NoWarn>
 		<Nullable>enable</Nullable>
 		<OutputType>Exe</OutputType>
 		<PackAsTool>true</PackAsTool>
@@ -14,6 +15,12 @@
 		<PackageOutputPath>./bin/Release/nupkg</PackageOutputPath>
 		<TargetFramework>net10.0</TargetFramework>
 		<ToolCommandName>ToolBox</ToolCommandName>
-		<Version>1.5.4</Version>
+		<Version>1.6.5</Version>
 	</PropertyGroup>
+	<ItemGroup>
+		<None Include="AddonModules\Updater\UpdateScript.ps1">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</None>
+	</ItemGroup>
 </Project>
