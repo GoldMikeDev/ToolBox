@@ -13,7 +13,7 @@ namespace ToolBox.Config
 			List<string> schemaSteeleTerm = [
             """
             SSH:
-                // Host Key Verification. (Default: TrustAfterFirstUse) [TrustAfterFirstUse, RejectAll, AllowAll]
+                // How to handle verification of Host Keys. (Default: TrustAfterFirstUse) [TrustAfterFirstUse, RejectAll, AllowAll]
                 HostKeyVerificationMethod = "TrustAfterFirstUse"
             """
             ];

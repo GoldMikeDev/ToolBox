@@ -6,9 +6,7 @@ namespace ToolBox.Config
         internal static Dictionary<string, object> GetConfig(List<string> toolNames)
         {
             Dictionary<string, object> root = [];
-            //root["Config"] = new Dictionary<string, object>();
             Stack<(Dictionary<string, object>, int)> stack = new();
-            //stack.GoDown((root, 0));
             foreach (string toolName in toolNames)
             {
                 string filePath = $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\.dotnet\\tools\\ToolBoxConfigs\\{toolName}.config";
@@ -20,7 +18,7 @@ namespace ToolBox.Config
                 string currentValue;
                 var toolDict = new Dictionary<string, object>();
                 root[toolName] = toolDict;
-                stack.GoDown((toolDict, 0));
+                stack.GoDown((toolDict, -1));
                 foreach (string line in lines)
                 {
                     int indent = line.TakeWhile(c => c == '\t').Count();
@@ -62,7 +60,6 @@ namespace ToolBox.Config
                     else { continue; }
                 }
                 stack.Clear();
-                stack.GoDown(((Dictionary<string, object>)root["Config"], 0));
             }
             return root;
         }

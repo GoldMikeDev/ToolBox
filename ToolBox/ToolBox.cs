@@ -95,7 +95,9 @@ namespace ToolBox
 					goto Prompt;
 				case "Config":
 					Console.WriteLine();
-					Editor.EditConfig(installedTools);
+					spinner.Start("⏳ Loading config files");
+					Editor.EditConfig(installedTools, spinner);
+					spinner.StopAndFlush();
 					Console.WriteLine();
 					goto Prompt;
 				case "Exit":
@@ -156,7 +158,7 @@ namespace ToolBox
 					Console.WriteLine("    Version bump:");
 					Console.WriteLine("     M - Major");
 					Console.WriteLine("     m - Minor");
-					Console.WriteLine("     p - patch (auto used if no version arg specified)");
+					Console.WriteLine("     p - Patch");
 					Console.WriteLine("    ----------------------------------------------------");
 					Console.WriteLine("     f - Force Update (bypass version hash checks)");
 					Console.WriteLine("    ----------------------------------------------------");
@@ -167,6 +169,7 @@ namespace ToolBox
 					Console.Write(prompt);
 					string? updateTarget = Console.ReadLine();
 					if (string.IsNullOrWhiteSpace(updateTarget)) { ClearLine(lineTop); goto LocalSource; }
+					if (updateTarget.Contains("Exit", StringComparison.Ordinal)) { return; }
 					if ((updateTarget.Contains('M') && updateTarget.Contains('m')) || (updateTarget.Contains('M') && updateTarget.Contains('p')) || (updateTarget.Contains('m') && updateTarget.Contains('p')))
 					{
 						Console.WriteLine("Only one version bump type can be specified.");
