@@ -15,7 +15,7 @@
 		<PackageOutputPath>./bin/Release/nupkg</PackageOutputPath>
 		<TargetFramework>net10.0</TargetFramework>
 		<ToolCommandName>ToolBox</ToolCommandName>
-		<Version>1.6.5</Version>
+		<Version>1.6.7</Version>
 	</PropertyGroup>
 	<ItemGroup>
 		<None Include="AddonModules\Updater\UpdateScript.ps1">

@@ -97,7 +97,6 @@ namespace ToolBox
 					Console.WriteLine();
 					spinner.Start("⏳ Loading config files");
 					Editor.EditConfig(installedTools, spinner);
-					spinner.StopAndFlush();
 					Console.WriteLine();
 					goto Prompt;
 				case "Exit":
@@ -126,14 +125,14 @@ namespace ToolBox
 					goto Prompt;
 				case "Update":
 					Console.WriteLine();
-					UpdateToolBox();
+					UpdateToolBox(spinner);
 					goto Prompt;
 				default:
 					ClearLine(lineTop);
 					goto Prompt;
 			}
 		}
-		static void UpdateToolBox()
+		static void UpdateToolBox(ConsoleSpinner? spinner = null)
 		{
 			Console.WriteLine("    Local(Source) or Remote(NuGet) (L/R):");
 			Console.WriteLine();
@@ -186,7 +185,7 @@ namespace ToolBox
 					if (updateTarget.Contains('m')) { minor = true; }
 					if (updateTarget.Contains('f')) { force = true; }
 					if (updateTarget.Contains('s')) { skip = true; }
-					Update.UpdateTool("ToolBox", "ToolBox.csproj", major, minor, force, skip, false, null, null, false);
+					Update.UpdateTool("ToolBox", "ToolBox.csproj", major, minor, force, skip, false, null, null, false, spinner);
 					return;
 				case "R":
 					Console.WriteLine("Not implemented yet.");
@@ -347,7 +346,7 @@ namespace ToolBox
 				}
 			}
 		}
-		static void ClearLine(int top)
+		internal static void ClearLine(int top)
 		{
 			int width = Math.Max(1, Console.BufferWidth);
 			Console.SetCursorPosition(0, top);

@@ -5,10 +5,12 @@ namespace ToolBox.Config
     {
         internal static Dictionary<string, object> GetConfig(List<string> toolNames)
         {
+            Dictionary<string, List<string>> schemaFile = Schema.GetSchema();
             Dictionary<string, object> root = [];
             Stack<(Dictionary<string, object>, int)> stack = new();
             foreach (string toolName in toolNames)
             {
+                if (!schemaFile.ContainsKey(toolName)) { continue; }
                 string filePath = $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\.dotnet\\tools\\ToolBoxConfigs\\{toolName}.config";
                 string[] lines = File.ReadAllLines(filePath);
                 string description = "";
@@ -46,8 +48,9 @@ namespace ToolBox.Config
                     }
                     else if (keyValueLineSeparator != -1)
                     {
-                        key = line[..keyValueLineSeparator].Trim();
-                        currentValue = line[(keyValueLineSeparator + 1)..];
+						while (indent <= stack.Current().Item2) { stack.GoUp(); }
+						key = line[..keyValueLineSeparator].Trim();
+                        currentValue = line[(keyValueLineSeparator + 1)..].Trim().Trim('"');
                         var keyDict = new Dictionary<string, object>();
                         stack.Current().Item1[key] = keyDict;
                         stack.GoDown((keyDict, indent));

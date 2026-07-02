@@ -17,8 +17,12 @@ namespace ToolBox.Config
                 HostKeyVerificationMethod = "TrustAfterFirstUse"
             """
             ];
-            configSchemas.Add("SteeleTerm", schemaSteeleTerm);
-            return configSchemas;
+			//List<string> schemaWrapHDL = [];
+			//List<string> schemaToolBox = [];
+			//configSchemas.Add("WrapHDL", schemaWrapHDL);
+			configSchemas.Add("SteeleTerm", schemaSteeleTerm);
+			//configSchemas.Add("ToolBox", schemaToolBox);
+			return configSchemas;
         }
     }
     public class SchemaException : Exception
